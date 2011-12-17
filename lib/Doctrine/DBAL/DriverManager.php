@@ -44,6 +44,7 @@ final class DriverManager
             'ibm_db2' => 'Doctrine\DBAL\Driver\IBMDB2\DB2Driver',
             'pdo_ibm' => 'Doctrine\DBAL\Driver\PDOIbm\Driver',
             'pdo_sqlsrv' => 'Doctrine\DBAL\Driver\PDOSqlsrv\Driver',
+            'drizzle' => 'Doctrine\DBAL\Driver\Drizzle\Driver',
             );
 
     /** Private constructor. This class cannot be instantiated. */
