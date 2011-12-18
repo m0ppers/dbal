@@ -150,7 +150,7 @@ class Statement implements \IteratorAggregate, \Doctrine\DBAL\Driver\Statement
         if (!$row) {
             return $row;
         }
-        
+
         if ($fixCase) {
             $row = array_change_key_case($row, $this->case);
         }

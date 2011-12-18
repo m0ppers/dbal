@@ -88,15 +88,8 @@ class DrizzleSchemaManager extends AbstractSchemaManager
         $tableColumn = array_change_key_case($tableColumn, CASE_LOWER);
 
         $dbType = strtolower($tableColumn['type']);
-        $dbType = strtok($dbType, '(), ');
-        if (isset($tableColumn['length'])) {
-            $length = $tableColumn['length'];
-            $decimal = '';
-        } else {
-            $length = strtok('(), ');
-            $decimal = strtok('(), ') ? strtok('(), '):null;
-        }
-        $type = array();
+
+        $length = $tableColumn['length'];
         $unsigned = $fixed = null;
 
         if ( ! isset($tableColumn['name'])) {
@@ -119,53 +112,24 @@ class DrizzleSchemaManager extends AbstractSchemaManager
             case 'real':
             case 'numeric':
             case 'decimal':
-                if(preg_match('([A-Za-z]+\(([0-9]+)\,([0-9]+)\))', $tableColumn['type'], $match)) {
-                    $precision = $match[1];
-                    $scale = $match[2];
-                    $length = null;
-                }
-                break;
-            case 'tinyint':
-            case 'smallint':
-            case 'mediumint':
-            case 'int':
-            case 'integer':
-            case 'bigint':
-            case 'tinyblob':
-            case 'mediumblob':
-            case 'longblob':
-            case 'blob':
-            case 'binary':
-            case 'varbinary':
-            case 'year':
-                $length = null;
+                $scale = $tableColumn['scale'];
+                $precision = $tableColumn['precision'];
                 break;
         }
 
         $length = ((int) $length == 0) ? null : (int) $length;
-        $def =  array(
-            'type' => $type,
-            'length' => $length,
-            'unsigned' => (bool) $unsigned,
-            'fixed' => (bool) $fixed
-        );
 
         $options = array(
             'length'        => $length,
             'unsigned'      => (bool)$unsigned,
             'fixed'         => (bool)$fixed,
             'default'       => $tableColumn['default'],
-            'notnull'       => (bool) ($tableColumn['null'] != 'YES'),
-            'scale'         => null,
-            'precision'     => null,
-            'autoincrement' => (bool) (strpos($tableColumn['extra'], 'auto_increment') !== false),
-            'comment'       => (isset($tableColumn['comment'])) ? $tableColumn['comment'] : null
+            'notnull'       => (bool) ($tableColumn['null'] != '1'),
+            'scale'         => $scale,
+            'precision'     => $precision,
+            'autoincrement' => (bool) $tableColumn['auto_increment'] == 'YES',
+            'comment'       => $tableColumn['comment'],
         );
-
-        if ($scale !== null && $precision !== null) {
-            $options['scale'] = $scale;
-            $options['precision'] = $precision;
-        }
 
         return new Column($tableColumn['field'], \Doctrine\DBAL\Types\Type::getType($type), $options);
     }
@@ -180,11 +144,18 @@ class DrizzleSchemaManager extends AbstractSchemaManager
         if (!isset($tableForeignKey['update_rule']) || $tableForeignKey['update_rule'] == "RESTRICT") {
             $tableForeignKey['update_rule'] = null;
         }
+
+        foreach (array('constraint_columns','referenced_table_columns') as $k) {
+            $v = $tableForeignKey[$k];
+            $v = str_replace('`','',$v);
+            $v = explode(',', $v);
+            $tableForeignKey[$k] = $v;
+        }
         
         return new ForeignKeyConstraint(
-            (array)$tableForeignKey['column_name'],
+            $tableForeignKey['constraint_columns'],
             $tableForeignKey['referenced_table_name'],
-            (array)$tableForeignKey['referenced_column_name'],
+            $tableForeignKey['referenced_table_columns'],
             $tableForeignKey['constraint_name'],
             array(
                 'onUpdate' => $tableForeignKey['update_rule'],

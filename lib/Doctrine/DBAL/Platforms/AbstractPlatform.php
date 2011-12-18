@@ -2373,4 +2373,9 @@ abstract class AbstractPlatform
     {
         throw DBALException::notSupported(__METHOD__);
     }
+
+    public function supportsViews()
+    {
+        return true;
+    }
 }

@@ -23,7 +23,7 @@ class SchemaManagerFunctionalTestCase extends \Doctrine\Tests\DbalFunctionalTest
         $e = explode('\\', $class);
         $testClass = end($e);
         $dbms = strtolower(str_replace('SchemaManagerTest', null, $testClass));
-
+        
         if ($this->_conn->getDatabasePlatform()->getName() !== $dbms) {
             $this->markTestSkipped('The ' . $testClass .' requires the use of ' . $dbms);
         }
@@ -370,6 +370,10 @@ class SchemaManagerFunctionalTestCase extends \Doctrine\Tests\DbalFunctionalTest
 
     public function testCreateAndListViews()
     {
+        if (!$this->_sm->getDatabasePlatform()->supportsViews()) {
+            $this->markTestSkipped('This test is only supported on platforms that have autoincrement');
+        }
+
         $this->createTestTable('view_test_table');
 
         $name = "doctrine_test_view";

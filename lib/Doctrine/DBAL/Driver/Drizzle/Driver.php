@@ -16,7 +16,7 @@ class Driver implements \Doctrine\DBAL\Driver
             $params['port'],
             $params['dbname'],
             $username,
-            $password,
+            $password
         );
     }
 

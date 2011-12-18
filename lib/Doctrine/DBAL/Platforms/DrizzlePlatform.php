@@ -24,6 +24,8 @@ use Doctrine\DBAL\DBALException,
     Doctrine\DBAL\Schema\Index,
     Doctrine\DBAL\Schema\Table;
 
+use Doctrine\DBAL\Driver\Drizzle\Exception;
+
 /**
  * The MySqlPlatform provides the behavior, features and SQL dialect of the
  * MySQL database platform. This platform represents a MySQL 5.0 or greater platform that
@@ -146,15 +148,11 @@ class DrizzlePlatform extends AbstractPlatform
      */
     public function getListTableIndexesSQL($table, $currentDatabase = null)
     {
-        if ($currentDatabase) {
-            return "SELECT TABLE_NAME AS `Table`, NON_UNIQUE AS Non_Unique, INDEX_NAME AS Key_name, ".
-                   "SEQ_IN_INDEX AS Seq_in_index, COLUMN_NAME AS Column_Name, COLLATION AS Collation, ".
-                   "CARDINALITY AS Cardinality, SUB_PART AS Sub_Part, PACKED AS Packed, " .
-                   "NULLABLE AS `Null`, INDEX_TYPE AS Index_Type, COMMENT AS Comment " .
-                   "FROM information_schema.STATISTICS WHERE TABLE_NAME = '" . $table . "' AND TABLE_SCHEMA = '" . $currentDatabase . "'";
-        } else {
-            return 'SHOW INDEX FROM ' . $table;
+        if (!$currentDatabase) {
+            throw new Exception('Must have database');
         }
+        
+        return "SELECT DATA_DICTIONARY.INDEXES.TABLE_NAME as `Table`, IF(DATA_DICTIONARY.INDEXES.IS_UNIQUE='YES',0,1) AS Non_Unique,DATA_DICTIONARY.INDEXES.INDEX_NAME AS Key_name,SEQUENCE_IN_INDEX AS Seq_in_index, COLUMN_NAME AS Column_Name,'A' AS Collation,DATA_DICTIONARY.INDEXES.IS_NULLABLE as `Null`,INDEX_TYPE as Index_Type FROM DATA_DICTIONARY.INDEXES,DATA_DICTIONARY.INDEX_PARTS WHERE DATA_DICTIONARY.INDEXES.INDEX_NAME=DATA_DICTIONARY.INDEX_PARTS.INDEX_NAME AND DATA_DICTIONARY.INDEXES.TABLE_NAME=DATA_DICTIONARY.INDEX_PARTS.TABLE_NAME AND DATA_DICTIONARY.INDEXES.TABLE_SCHEMA=DATA_DICTIONARY.INDEX_PARTS.TABLE_SCHEMA AND DATA_DICTIONARY.INDEXES.TABLE_NAME = '".$table."' AND DATA_DICTIONARY.INDEXES.TABLE_SCHEMA = '".$currentDatabase."'";
     }
 
     public function getListViewsSQL($database)
@@ -164,19 +162,11 @@ class DrizzlePlatform extends AbstractPlatform
 
     public function getListTableForeignKeysSQL($table, $database = null)
     {
-        $sql = "SELECT DISTINCT k.`CONSTRAINT_NAME`, k.`COLUMN_NAME`, k.`REFERENCED_TABLE_NAME`, ".
-               "k.`REFERENCED_COLUMN_NAME` /*!50116 , c.update_rule, c.delete_rule */ ".
-               "FROM information_schema.key_column_usage k /*!50116 ".
-               "INNER JOIN information_schema.referential_constraints c ON ".
-               "  c.constraint_name = k.constraint_name AND ".
-               "  c.table_name = '$table' */ WHERE k.table_name = '$table'";
-
+        // XXX multiple column names in *_COLUMNS
+        $sql = "SELECT DISTINCT CONSTRAINT_NAME,CONSTRAINT_COLUMNS,REFERENCED_TABLE_NAME,REFERENCED_TABLE_COLUMNS,UPDATE_RULE,DELETE_RULE FROM DATA_DICTIONARY.FOREIGN_KEYS WHERE CONSTRAINT_TABLE = '".$table."'";
         if ($database) {
-            $sql .= " AND k.table_schema = '$database' /*!50116 AND c.constraint_schema = '$database' */";
+            $sql .= " AND CONSTRAINT_SCHEMA = '".$database."'";
         }
-
-        $sql .= " AND k.`REFERENCED_COLUMN_NAME` is not NULL";
-
         return $sql;
     }
 
@@ -250,7 +240,7 @@ class DrizzlePlatform extends AbstractPlatform
      */
     public function getBooleanTypeDeclarationSQL(array $field)
     {
-        return 'TINYINT(1)';
+        return 'BOOLEAN';
     }
 
     /**
@@ -303,18 +293,18 @@ class DrizzlePlatform extends AbstractPlatform
 
     public function getListTablesSQL()
     {
-        return "SHOW FULL TABLES WHERE Table_type = 'BASE TABLE'";
+        return "SHOW TABLES";
     }
 
     public function getListTableColumnsSQL($table, $database = null)
     {
         if ($database) {
-            return "SELECT COLUMN_NAME AS Field, COLUMN_TYPE AS Type, IS_NULLABLE AS `Null`, ".
-                   "COLUMN_KEY AS `Key`, COLUMN_DEFAULT AS `Default`, EXTRA AS Extra, COLUMN_COMMENT AS Comment, " .
-                   "CHARACTER_SET_NAME AS CharacterSet, COLLATION_NAME AS CollactionName ".
-                   "FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = '" . $database . "' AND TABLE_NAME = '" . $table . "'";
+            return "SELECT COLUMN_NAME AS Field, DATA_TYPE AS Type, IS_NULLABLE AS `Null`, ".
+                "COLUMN_DEFAULT AS `Default`,IS_AUTO_INCREMENT as 'auto_increment',IF(DATA_TYPE='VARCHAR' OR DATA_TYPE='CHAR',CHARACTER_MAXIMUM_LENGTH,NULL) as length," .
+                "NUMERIC_SCALE as scale, NUMERIC_PRECISION as `precision`, COLUMN_COMMENT as comment " .
+                   "FROM DATA_DICTIONARY.COLUMNS WHERE TABLE_SCHEMA = '" . $database . "' AND TABLE_NAME = '" . $table . "'";
         } else {
-            return 'DESCRIBE ' . $table;
+            throw new Exception('Must have database');
         }
     }
 
@@ -623,7 +613,7 @@ class DrizzlePlatform extends AbstractPlatform
      */
     public function getName()
     {
-        return 'mysql';
+        return 'drizzle';
     }
 
     public function getReadLockSQL()
@@ -697,5 +687,22 @@ class DrizzlePlatform extends AbstractPlatform
     public function getBlobTypeDeclarationSQL(array $field)
     {
         return 'LONGBLOB';
+    }
+    
+    public function supportsViews()
+    {
+        return false;
+    }
+
+    public function convertBooleans($item)
+    {
+        if (is_array($item)) {
+            foreach ($item as $key => $value) {
+                $item[$key] = $value ? 'TRUE' : 'FALSE';
+            }
+        } elseif (isset($item)) {
+            $item = $item ? 'TRUE' : 'FALSE';
+        }
+        return $item;
     }
 }
