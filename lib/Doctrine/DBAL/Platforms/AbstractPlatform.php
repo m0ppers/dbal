@@ -376,6 +376,16 @@ abstract class AbstractPlatform
     {
         throw DBALException::notSupported(__METHOD__);
     }
+    
+    /**
+     * Returns global unique identifier
+     *
+     * @return string to get global unique identifier
+     */
+    public function getGuidExpression()
+    {
+        throw DBALException::notSupported(__METHOD__);
+    }
 
     /**
      * Returns the average value of a column
@@ -784,6 +794,30 @@ abstract class AbstractPlatform
     public function getDateSubMonthExpression($date, $months)
     {
         throw DBALException::notSupported(__METHOD__);
+    }
+
+    /**
+     * Gets SQL bit AND comparison  expression
+     *
+     * @param   string $value1
+     * @param   string $value2
+     * @return  string
+     */
+    public function getBitAndComparisonExpression($value1, $value2)
+    {
+        return '(' . $value1 . ' & ' . $value2 . ')';
+    }
+
+    /**
+     * Gets SQL bit OR comparison expression
+     *
+     * @param   string $value1
+     * @param   string $value2
+     * @return  string
+     */
+    public function getBitOrComparisonExpression($value1, $value2)
+    {
+        return '(' . $value1 . ' | ' . $value2 . ')';
     }
 
     public function getForUpdateSQL()
