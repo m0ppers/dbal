@@ -624,29 +624,16 @@ class DrizzlePlatform extends AbstractPlatform
     protected function initializeDoctrineTypeMappings()
     {
         $this->doctrineTypeMapping = array(
-            'tinyint'       => 'boolean',
-            'smallint'      => 'smallint',
-            'mediumint'     => 'integer',
-            'int'           => 'integer',
             'integer'       => 'integer',
             'bigint'        => 'bigint',
-            'tinytext'      => 'text',
-            'mediumtext'    => 'text',
-            'longtext'      => 'text',
-            'text'          => 'text',
-            'varchar'       => 'string',
-            'string'        => 'string',
-            'char'          => 'string',
             'date'          => 'date',
             'datetime'      => 'datetime',
             'timestamp'     => 'datetime',
             'time'          => 'time',
-            'float'         => 'float',
+            'varchar'       => 'string',
+            'text'          => 'text',
+            'boolean'       => 'boolean',
             'double'        => 'float',
-            'real'          => 'float',
-            'decimal'       => 'decimal',
-            'numeric'       => 'decimal',
-            'year'          => 'date',
         );
     }
 
