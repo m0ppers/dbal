@@ -634,6 +634,7 @@ class DrizzlePlatform extends AbstractPlatform
             'text'          => 'text',
             'boolean'       => 'boolean',
             'double'        => 'float',
+            'decimal'       => 'decimal',
         );
     }
 
