@@ -114,8 +114,18 @@ class Statement implements \IteratorAggregate, StatementInterface
                     $query .= '\'' . $this->drizzle->escapeString($param['value']) . '\'';
                 } elseif ($param['type'] == \PDO::PARAM_NULL) {
                     $query .= 'NULL';
-                } elseif ($param['type'] == \PDO::PARAM_BOOL || $param['type'] == \PDO::PARAM_INT) {
-                    $query .= $param['value'];
+                } elseif ($param['type'] == \PDO::PARAM_BOOL) {
+                    $value = $param['value'];
+                    if (!is_string($value)) {
+                        $value = $value ? 'true' : 'false';
+                    }
+                    $value = strtolower($value);
+                    if ($value !== 'true' && $value !== 'false') {
+                        throw new Exception('Invalid boolean value ' . $value . ' provided');
+                    }
+                    $query .= $value;
+                } elseif ($param['type'] == \PDO::PARAM_INT) {
+                    $query .= (int) $param['value'];
                 } else {
                     throw new Exception('Param type '.$param['type'].' is unsupported');
                 }
