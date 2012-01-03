@@ -63,6 +63,7 @@ class Statement implements \IteratorAggregate, StatementInterface
         $this->boundParams[$column] = array('type' => $type,
                                             'value' => &$variable,
                                         );
+
     }
 
     /**
@@ -114,7 +115,7 @@ class Statement implements \IteratorAggregate, StatementInterface
                 } elseif ($param['type'] == \PDO::PARAM_NULL) {
                     $query.='NULL';
                 } elseif ($param['type'] == \PDO::PARAM_BOOL || $param['type'] == \PDO::PARAM_INT) {
-                    $query.=(int)$param['value'];
+                    $query.=$param['value'];
                 } else {
                     throw new Exception('Param type '.$param['type'].' is unsupported');
                 }

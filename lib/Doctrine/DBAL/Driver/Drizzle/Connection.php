@@ -66,7 +66,7 @@ class Connection implements \Doctrine\DBAL\Driver\Connection
      */
     public function quote($input, $type=\PDO::PARAM_STR)
     {
-        if (is_int($input) || is_float($input)) {
+        if (is_int($input) || is_float($input) || is_bool($input)) {
             return $input;
         }
         return "'". $this->_drizzle->escapeString($input) ."'";
