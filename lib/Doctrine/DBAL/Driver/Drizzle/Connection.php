@@ -35,12 +35,6 @@ class Connection implements \Doctrine\DBAL\Driver\Connection
      */
     protected $_dbh;
 
-    /**
-     * @var \Doctrine\DBAL\Driver\Drizzle\Statement
-     * @access private
-     */
-    private $lastStatement;
-
     public function __construct($host, $port, $db, $username, $password)
     {
         $this->_drizzle = drizzle_create();
@@ -52,8 +46,7 @@ class Connection implements \Doctrine\DBAL\Driver\Connection
      */
     public function prepare($prepareString)
     {
-        $this->lastStatement = new Statement($this->_drizzle, $this->_dbh, $prepareString);
-        return $this->lastStatement;
+        return new Statement($this->_drizzle, $this->_dbh, $prepareString);
     }
     
     /**
@@ -94,7 +87,7 @@ class Connection implements \Doctrine\DBAL\Driver\Connection
      */
     public function lastInsertId($name = null)
     {
-        return $this->lastStatement->getResult()->insertId();
+        return $this->query('SELECT LAST_INSERT_ID()')->fetchColumn();
     }
 
     /**
