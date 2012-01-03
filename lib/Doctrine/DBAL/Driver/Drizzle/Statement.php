@@ -99,36 +99,36 @@ class Statement implements \IteratorAggregate, StatementInterface
             $params = $tmp;
         }
         if (count($params) > 0) {
-            $query = "";
+            $query = '';
             $statement = $this->statement;
-            while (($pos = strpos($statement, "?")) !== false) {
+            while (($pos = strpos($statement, '?')) !== false) {
                 $part = substr($statement,0,$pos);
 
                 $param = array_shift($params);
-                $query.=$part;
+                $query .= $part;
 
                 
                 if (null === $param['value']) {
-                    $query.='NULL';
+                    $query .= 'NULL';
                 } elseif (!isset($param['type']) || in_array($param['type'], array(\PDO::PARAM_STR, \PDO::PARAM_LOB))) {
-                    $query.="'".$this->drizzle->escapeString($param['value'])."'";
+                    $query .= '\'' . $this->drizzle->escapeString($param['value']) . '\'';
                 } elseif ($param['type'] == \PDO::PARAM_NULL) {
-                    $query.='NULL';
+                    $query .= 'NULL';
                 } elseif ($param['type'] == \PDO::PARAM_BOOL || $param['type'] == \PDO::PARAM_INT) {
-                    $query.=$param['value'];
+                    $query .= $param['value'];
                 } else {
                     throw new Exception('Param type '.$param['type'].' is unsupported');
                 }
 
                 $statement = substr($statement, $pos+1);
             }   
-            $query.=$statement;
+            $query .= $statement;
         } else {
             $query = $this->statement;
         }
         $this->result = @$this->conn->query($query);
         if (!$this->result) {
-            throw new Exception($query.': '.$this->conn->error(), $this->conn->errorCode());
+            throw new Exception($query . ': ' . $this->conn->error(), $this->conn->errorCode());
         }
         $this->result->buffer();
         return true;
@@ -199,7 +199,7 @@ class Statement implements \IteratorAggregate, StatementInterface
             case \PDO::FETCH_NUM:
                 return $row;
             default:
-                throw new Exception("Given Fetch-Style " . $fetchStyle . " is not supported.");
+                throw new Exception('Given Fetch-Style ' . $fetchStyle . ' is not supported.');
         }
     }
 

@@ -20,6 +20,7 @@ namespace Doctrine\DBAL\Driver\Drizzle;
 
 /**
  * @author Andreas Streichardt <andreas.streichardt@gmail.com>
+ * @EXPERIMENTAL
  */
 class Connection implements \Doctrine\DBAL\Driver\Connection
 {
@@ -69,7 +70,7 @@ class Connection implements \Doctrine\DBAL\Driver\Connection
         if (is_int($input) || is_float($input) || is_bool($input)) {
             return $input;
         }
-        return "'". $this->_drizzle->escapeString($input) ."'";
+        return '\'' . $this->_drizzle->escapeString($input) . '\'';
     }
     
     /**
