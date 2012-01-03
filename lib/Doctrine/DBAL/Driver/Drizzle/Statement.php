@@ -107,7 +107,7 @@ class Statement implements \IteratorAggregate, StatementInterface
                 $query.=$part;
 
                 
-                if ($param['value'] === null) {
+                if (null === $param['value']) {
                     $query.='NULL';
                 } elseif (!isset($param['type']) || in_array($param['type'], array(\PDO::PARAM_STR, \PDO::PARAM_LOB))) {
                     $query.="'".$this->drizzle->escapeString($param['value'])."'";
